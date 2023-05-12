@@ -188,12 +188,11 @@ class AdditiveNoisePrivacyLoss(metaclass=abc.ABCMeta):
 
     if self.adjacency_type == AdjacencyType.ADD:
       return self.noise_cdf(x)
-    else:  # Case: self.adjacency_type == AdjacencyType.REMOVE
-      # For performance, the case of sampling_prob=1 is handled separately.
-      if self.sampling_prob == 1.0:
-        return self.noise_cdf(np.add(x, self.sensitivity))
-      return ((1 - self.sampling_prob) * self.noise_cdf(x) +
-              self.sampling_prob * self.noise_cdf(np.add(x, self.sensitivity)))
+    # For performance, the case of sampling_prob=1 is handled separately.
+    if self.sampling_prob == 1.0:
+      return self.noise_cdf(np.add(x, self.sensitivity))
+    return ((1 - self.sampling_prob) * self.noise_cdf(x) +
+            self.sampling_prob * self.noise_cdf(np.add(x, self.sensitivity)))
 
   def mu_lower_cdf(
       self, x: Union[float, Iterable[float]]) -> Union[float, np.ndarray]:
@@ -212,15 +211,13 @@ class AdditiveNoisePrivacyLoss(metaclass=abc.ABCMeta):
       The cumulative density function of the mu_lower distribution at x, i.e.,
       the probability that mu_lower is less than or equal to x.
     """
-    if self.adjacency_type == AdjacencyType.ADD:
-      # For performance, the case of sampling_prob=1 is handled separately.
-      if self.sampling_prob == 1.0:
-        return self.noise_cdf(np.add(x, -self.sensitivity))
-      return ((1 - self.sampling_prob) * self.noise_cdf(x) +
-              self.sampling_prob * self.noise_cdf(np.add(x, -self.sensitivity)))
-
-    else:  # Case: self.adjacency_type == AdjacencyType.REMOVE
+    if self.adjacency_type != AdjacencyType.ADD:
       return self.noise_cdf(x)
+    # For performance, the case of sampling_prob=1 is handled separately.
+    if self.sampling_prob == 1.0:
+      return self.noise_cdf(np.add(x, -self.sensitivity))
+    return ((1 - self.sampling_prob) * self.noise_cdf(x) +
+            self.sampling_prob * self.noise_cdf(np.add(x, -self.sensitivity)))
 
   def get_delta_for_epsilon(
       self, epsilon: Union[float, List[float]]) -> Union[float, List[float]]:
@@ -411,10 +408,7 @@ class AdditiveNoisePrivacyLoss(metaclass=abc.ABCMeta):
       # -log(1 + (exp(-privacy_loss) - 1) / sampling_prob).
       privacy_loss_without_subsampling = -common.log_a_times_exp_b_plus_c(
           1 / self.sampling_prob, -privacy_loss, 1 - 1 / self.sampling_prob)
-      return self.inverse_privacy_loss_without_subsampling(
-          privacy_loss_without_subsampling)
-
-    else:  # Case: self.adjacency_type == AdjacencyType.REMOVE
+    else:# Case: self.adjacency_type == AdjacencyType.REMOVE
       if math.isclose(privacy_loss, math.log(1 - self.sampling_prob)):
         return self.inverse_privacy_loss_without_subsampling(-math.inf)
       if privacy_loss <= math.log(1 - self.sampling_prob):
@@ -425,8 +419,9 @@ class AdditiveNoisePrivacyLoss(metaclass=abc.ABCMeta):
       # log(1 + (exp(privacy_loss) - 1) / sampling_prob).
       privacy_loss_without_subsampling = common.log_a_times_exp_b_plus_c(
           1 / self.sampling_prob, privacy_loss, 1 - 1 / self.sampling_prob)
-      return self.inverse_privacy_loss_without_subsampling(
-          privacy_loss_without_subsampling)
+
+    return self.inverse_privacy_loss_without_subsampling(
+        privacy_loss_without_subsampling)
 
   @abc.abstractmethod
   def inverse_privacy_loss_without_subsampling(self,

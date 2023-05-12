@@ -135,7 +135,7 @@ class ClusteringResult():
       result = [closest_center(datapoint) for datapoint in self.data.datapoints]
       object.__setattr__(self, "labels",
                          np.array([res[0] for res in result], dtype=int))
-      object.__setattr__(self, "loss", sum([res[1] for res in result]))
+      object.__setattr__(self, "loss", sum(res[1] for res in result))
     if self.labels is None or self.loss is None:
       raise ValueError("Only one of labels or loss was initialized; "
                        "either both should be initialized or none.")
@@ -147,7 +147,7 @@ class ClusteringResult():
     if centers_dim != self.data.dim:
       raise ValueError(f"Dimension of cluster centers ({centers_dim}) is not "
                        f"equal to dimension of data points ({self.data.dim})")
-    if not all([label in list(range(num_clusters)) for label in self.labels]):
+    if any(label not in list(range(num_clusters)) for label in self.labels):
       raise ValueError("Labels in incorrect format. Each entry of label must "
                        "be an integer between 0 and number of clusters - 1")
 
@@ -229,11 +229,7 @@ def private_lsh_clustering(
   # Note that max_depth is used for the private count calculation so it cannot
   # depend on the count.
   # Chosen experimentally over multiple datasets.
-  if tree_param is None:
-    max_depth = 20
-  else:
-    max_depth = tree_param.max_depth
-
+  max_depth = 20 if tree_param is None else tree_param.max_depth
   # Use default multiplier if not provided.
   multipliers = (clustering_params.PrivacyCalculatorMultiplier()
                  if multipliers is None else multipliers)

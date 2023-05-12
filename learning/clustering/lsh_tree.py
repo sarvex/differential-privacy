@@ -94,7 +94,7 @@ class LshTreeNode():
 
   def __repr__(self) -> str:
     """Represents nodes in the form of private_count(hash_prefix)."""
-    return str(self.private_count) + "(" + self.hash_prefix + ")"
+    return f"{str(self.private_count)}({self.hash_prefix})"
 
 
 # List of leaves in the LSH tree.
@@ -145,15 +145,12 @@ class LshTree():
     logging.debug("Starting tree construction with max_levels %s",
                   coreset_param.tree_param.max_depth)
     level_idx: LevelIndex = 0
-    self.tree: typing.Dict[LevelIndex, LshTreeLevel] = dict()
-    self.tree[level_idx] = [root]
-
+    self.tree: typing.Dict[LevelIndex, LshTreeLevel] = {level_idx: [root]}
     while level_idx < coreset_param.tree_param.max_depth:
       # Branch all the nodes that should be branched
       branching_nodes: NodesToBranch = LshTree.filter_branching_nodes(
           self.tree[level_idx])
-      next_level = LshTree.get_next_level(branching_nodes)
-      if next_level:
+      if next_level := LshTree.get_next_level(branching_nodes):
         level_idx += 1
         self.tree[level_idx] = next_level
       else:
@@ -178,13 +175,8 @@ class LshTree():
     if level_below > max(self.tree.keys()):
       return True
 
-    for maybe_child in self.tree.get(level_below):
-      # Each level adds one character to the hash prefix.
-      if node.hash_prefix == maybe_child.hash_prefix[:-1]:
-        return False
-
-    # No children were found, so this node is a leaf.
-    return True
+    return all(node.hash_prefix != maybe_child.hash_prefix[:-1]
+               for maybe_child in self.tree.get(level_below))
 
   @staticmethod
   def filter_branching_nodes(tree_level: LshTreeLevel) -> NodesToBranch:

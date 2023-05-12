@@ -150,12 +150,12 @@ class PrivacyLossDistribution:
           infinity_mass_add is not None):
         raise ValueError('Details about privacy loss distribution with respect'
                          'to ADD adjacency cannot be specified when symmetric')
-    else:
-      if (rounded_probability_mass_function_add is None or
+    elif (rounded_probability_mass_function_add is None or
           infinity_mass_add is None):
-        raise ValueError('Details about privacy loss distribution with respect'
-                         'to ADD adjacency should be specified when not '
-                         'symmetric')
+      raise ValueError('Details about privacy loss distribution with respect'
+                       'to ADD adjacency should be specified when not '
+                       'symmetric')
+    else:
       pmf_add = pld_pmf.create_pmf(rounded_probability_mass_function_add,
                                    value_discretization_interval,
                                    infinity_mass_add, pessimistic_estimate)
@@ -820,12 +820,7 @@ def _create_pld_pmf_from_additive_noise(
     The privacy loss distribution constructed as specified.
   """
   if use_connect_dots:
-    if not pessimistic_estimate:
-      logging.warning('Connect-the-Dots implementation does not support '
-                      'pessimistic_estimate=False. Using Privacy Buckets '
-                      'algorithm instead. Set use_connect_dots=False to avoid '
-                      'this warning.')
-    else:
+    if pessimistic_estimate:
       connect_dots_bounds = additive_noise_privacy_loss.connect_dots_bounds()
 
       if additive_noise_privacy_loss.discrete_noise:
@@ -861,18 +856,20 @@ def _create_pld_pmf_from_additive_noise(
       deltas = additive_noise_privacy_loss.get_delta_for_epsilon(
           rounded_epsilons * value_discretization_interval)
 
-      if additive_noise_privacy_loss.discrete_noise:
-        return pld_pmf.create_pmf_pessimistic_connect_dots(
-            value_discretization_interval,
-            rounded_epsilons,
-            deltas)
-      # Else use specialized numerically stable approach for continuous noise
-      return pld_pmf.create_pmf_pessimistic_connect_dots_fixed_gap(
-          value_discretization_interval,
-          rounded_epsilon_lower,
-          rounded_epsilon_upper,
-          deltas)
-
+      return (pld_pmf.create_pmf_pessimistic_connect_dots(
+          value_discretization_interval, rounded_epsilons, deltas)
+              if additive_noise_privacy_loss.discrete_noise else
+              pld_pmf.create_pmf_pessimistic_connect_dots_fixed_gap(
+                  value_discretization_interval,
+                  rounded_epsilon_lower,
+                  rounded_epsilon_upper,
+                  deltas,
+              ))
+    else:
+      logging.warning('Connect-the-Dots implementation does not support '
+                      'pessimistic_estimate=False. Using Privacy Buckets '
+                      'algorithm instead. Set use_connect_dots=False to avoid '
+                      'this warning.')
   round_fn = math.ceil if pessimistic_estimate else math.floor
 
   tail_pld = additive_noise_privacy_loss.privacy_loss_tail()

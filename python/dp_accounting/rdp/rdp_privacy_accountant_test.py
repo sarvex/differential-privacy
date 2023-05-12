@@ -36,10 +36,7 @@ def _get_test_rdp(event, count=1):
 
 def _log_float_mp(x):
   # Convert multi-precision input to float log space.
-  if x >= sys.float_info.min:
-    return float(mpmath.log(x))
-  else:
-    return -np.inf
+  return float(mpmath.log(x)) if x >= sys.float_info.min else -np.inf
 
 
 def _compute_a_mp(sigma, q, alpha):
@@ -277,7 +274,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
 
   def test_compute_epsilon_delta_pure_dp(self):
     orders = range(2, 33)
-    rdp = [1.1 for o in orders]  # Constant corresponds to pure DP.
+    rdp = [1.1 for _ in orders]
 
     epsilon, optimal_order = rdp_privacy_accountant.compute_epsilon(
         orders, rdp, delta=1e-5)
@@ -346,7 +343,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
   })
 
   # pylint:disable=undefined-variable
-  @parameterized.parameters(p for p in params)
+  @parameterized.parameters(iter(params))
   def test_compute_log_a_equals_mp(self, q, sigma, order):
     # Compare the cheap computation of log(A) with an expensive, multi-precision
     # computation.
@@ -371,10 +368,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
 
       # Compute the "standard" upper bound, which should be an upper bound.
       # Note, if orders is too sparse, this will NOT be an upper bound.
-      if eps >= 0.5:
-        delta1 = math.exp(-0.5 * (eps - 0.5)**2)
-      else:
-        delta1 = 1
+      delta1 = math.exp(-0.5 * (eps - 0.5)**2) if eps >= 0.5 else 1
       self.assertLessEqual(delta, delta1 + 1e-300)
 
   def test_epsilon_delta_consistency(self):
@@ -528,10 +522,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
     # Test this function by simply applying the non-numerically stable formula.
     # logarithmic distribution
     mean = rdp_privacy_accountant._truncated_negative_binomial_mean(gamma, 0)
-    if gamma == 1:
-      ans = 1
-    else:
-      ans = (1-1/gamma)/math.log(gamma)
+    ans = 1 if gamma == 1 else (1-1/gamma)/math.log(gamma)
     self.assertAlmostEqual(mean, ans)
 
     # geometric Distribution
@@ -542,10 +533,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
     for shape in [0.01, 0.5, 0.99, 1.01, 2, 10]:
       mean = rdp_privacy_accountant._truncated_negative_binomial_mean(
           gamma, shape)
-      if gamma == 1:
-        ans = 1
-      else:
-        ans = shape*(1/gamma-1)/(1-gamma**shape)
+      ans = 1 if gamma == 1 else shape*(1/gamma-1)/(1-gamma**shape)
       self.assertAlmostEqual(mean, ans)
 
   # _gamma_truncated_negative_binomial is meant to be the inverse of
@@ -642,7 +630,7 @@ class RdpPrivacyAccountantTest(privacy_accountant_test.PrivacyAccountantTest,
       else:
         eps = rho * (order - 1) + math.log(mean) / (order - 1) + 2 * (
             1 + shape) * math.sqrt(-rho * math.log(gamma)) - shape * rho
-      self.assertAlmostEqual(rdp, eps, msg='order=' + str(order))
+      self.assertAlmostEqual(rdp, eps, msg=f'order={str(order)}')
 
   @parameterized.named_parameters(
       ('mean1', 1, 1),

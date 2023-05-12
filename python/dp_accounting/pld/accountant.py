@@ -260,10 +260,10 @@ def advanced_composition(
 
   # The calculation follows Theorem 3.3 of https://arxiv.org/pdf/1311.0776.pdf
   for i in range(k // 2, -1, -1):
-    delta_i = 0
-    for l in range(i):
-      delta_i += special.binom(k, l) * (
-          math.exp(epsilon * (k - l)) - math.exp(epsilon * (k - 2 * i + l)))
+    delta_i = sum(
+        special.binom(k, l) *
+        (math.exp(epsilon * (k - l)) - math.exp(epsilon * (k - 2 * i + l)))
+        for l in range(i))
     delta_i /= ((1 + math.exp(epsilon))**k)
     if 1 - ((1 - delta) ** k) * (1 - delta_i) <= total_delta:
       return epsilon * (k - 2 * i)

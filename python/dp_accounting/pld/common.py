@@ -101,11 +101,7 @@ def inverse_monotone_function(func: Callable[[float], float],
       initial_guess_x *= 2
     upper_x = min(upper_x, initial_guess_x)
 
-  if search_parameters.discrete:
-    tolerance = 1
-  else:
-    tolerance = search_parameters.tolerance
-
+  tolerance = 1 if search_parameters.discrete else search_parameters.tolerance
   while upper_x - lower_x > tolerance:
     if search_parameters.discrete:
       mid_x = (upper_x + lower_x) // 2
@@ -117,10 +113,7 @@ def inverse_monotone_function(func: Callable[[float], float],
     else:
       upper_x = mid_x
 
-  if increasing:
-    return lower_x
-  else:
-    return upper_x
+  return lower_x if increasing else upper_x
 
 
 def dictionary_to_list(
@@ -175,11 +168,11 @@ def list_to_dictionary(input_list: List[float],
       break
     upper_truncation_index -= 1
 
-  result_dictionary = {}
-  for i in range(lower_truncation_index, upper_truncation_index + 1):
-    if input_list[i] > 0:
-      result_dictionary[i + offset] = input_list[i]
-  return result_dictionary
+  return {
+      i + offset: input_list[i]
+      for i in range(lower_truncation_index, upper_truncation_index + 1)
+      if input_list[i] > 0
+  }
 
 
 def convolve_dictionary(dictionary1: Mapping[int, float],

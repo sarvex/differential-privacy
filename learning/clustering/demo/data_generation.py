@@ -73,13 +73,14 @@ def generate_synthetic_dataset(
   Returns:
     Data containing sampled datapoints, radius, and labels.
   """
-  center_radius = radius * (1 - 1 / float(cluster_ratio))
+  center_radius = radius * (1 - 1 / cluster_ratio)
   rand_centers: np.ndarray = sample_uniform_sphere(
       num_clusters, dim, center_radius)  # shape=(num_clusters, dim)
   datapoints: np.ndarray = np.random.normal(
       0,
-      np.sqrt(radius) / (float(cluster_ratio) * np.sqrt(dim)),
-      size=(num_points, dim))
+      np.sqrt(radius) / (cluster_ratio * np.sqrt(dim)),
+      size=(num_points, dim),
+  )
 
   num_points_per_cluster: np.ndarray = np.ones(num_clusters, dtype=int) * (
       num_points // num_clusters)

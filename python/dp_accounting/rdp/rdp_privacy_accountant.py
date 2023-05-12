@@ -30,10 +30,7 @@ CompositionErrorDetails = privacy_accountant.PrivacyAccountant.CompositionErrorD
 def _log_add(logx: float, logy: float) -> float:
   """Adds two numbers in the log space."""
   a, b = min(logx, logy), max(logx, logy)
-  if a == -np.inf:  # adding 0
-    return b
-  # Use exp(a) + exp(b) = (exp(a - b) + 1) * exp(b)
-  return math.log1p(math.exp(a - b)) + b  # log1p(x) = log(x + 1)
+  return b if a == -np.inf else math.log1p(math.exp(a - b)) + b
 
 
 def _log_sub(logx: float, logy: float) -> float:
@@ -178,10 +175,7 @@ def compute_delta(orders: Sequence[float], rdp: Sequence[float],
     # For small alpha, we are better of with bound via KL divergence:
     # delta <= sqrt(1-exp(-KL)).
     # Take a min of the two bounds.
-    if r == 0:
-      logdelta = -np.inf
-    else:
-      logdelta = 0.5 * math.log1p(-math.exp(-r))
+    logdelta = -np.inf if r == 0 else 0.5 * math.log1p(-math.exp(-r))
     if a > 1.01:
       # This bound is not numerically stable as alpha->1.
       # Thus we have a min value for alpha.
@@ -215,11 +209,7 @@ def compute_epsilon(orders: Sequence[float], rdp: Sequence[float],
     raise ValueError(f'Delta cannot be negative. Found {delta}.')
 
   if delta == 0:
-    if all(r == 0 for r in rdp):
-      return 0, 0
-    else:
-      return np.inf, 0
-
+    return (0, 0) if all(r == 0 for r in rdp) else (np.inf, 0)
   if len(orders) != len(rdp):
     raise ValueError('Input lists must have the same length.')
 
@@ -418,16 +408,15 @@ def _compute_rdp_sample_wor_gaussian_scalar(q: float, sigma: float,
   if float(alpha).is_integer():
     return _compute_rdp_sample_wor_gaussian_int(q, sigma, int(alpha)) / (
         alpha - 1)
-  else:
-    # When alpha not an integer, we apply Corollary 10 of [WBK19] to interpolate
-    # the CGF and obtain an upper bound
-    alpha_f = math.floor(alpha)
-    alpha_c = math.ceil(alpha)
+  # When alpha not an integer, we apply Corollary 10 of [WBK19] to interpolate
+  # the CGF and obtain an upper bound
+  alpha_f = math.floor(alpha)
+  alpha_c = math.ceil(alpha)
 
-    x = _compute_rdp_sample_wor_gaussian_int(q, sigma, alpha_f)
-    y = _compute_rdp_sample_wor_gaussian_int(q, sigma, alpha_c)
-    t = alpha - alpha_f
-    return ((1 - t) * x + t * y) / (alpha - 1)
+  x = _compute_rdp_sample_wor_gaussian_int(q, sigma, alpha_f)
+  y = _compute_rdp_sample_wor_gaussian_int(q, sigma, alpha_c)
+  t = alpha - alpha_f
+  return ((1 - t) * x + t * y) / (alpha - 1)
 
 
 def _compute_rdp_sample_wor_gaussian_int(q: float, sigma: float,

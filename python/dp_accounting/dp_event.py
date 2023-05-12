@@ -151,7 +151,7 @@ class DpEvent(object):
         value = DpEvent.from_named_tuple(value)
       return value
 
-    fields = set(obj._fields) - set(['module_name', 'class_name'])
+    fields = set(obj._fields) - {'module_name', 'class_name'}
     values = {}
     for field in fields:
       value = getattr(obj, field)

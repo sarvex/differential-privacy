@@ -45,12 +45,12 @@ def get_test_coreset_param(epsilon: float = 1.0,
   pcalc = privacy_calculator.PrivacyCalculator(
       privacy_param, radius, max_depth, multipliers
   )
-  coreset_param = coreset_params.CoresetParam(
+  return coreset_params.CoresetParam(
       pcalc=pcalc,
       tree_param=tree_param,
       short_description='TestCoresetParam',
-      radius=radius)
-  return coreset_param
+      radius=radius,
+  )
 
 
 class TestPrivacyCalculator(privacy_calculator.PrivacyCalculator):

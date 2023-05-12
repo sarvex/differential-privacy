@@ -68,19 +68,21 @@ class TestLshTreeNode(lsh_tree.LshTreeNode):
     cutoff = int(len(self.nonprivate_points) * self.frac_zero)
     return [
         TestLshTreeNode(
-            self.hash_prefix + '0',
+            f'{self.hash_prefix}0',
             self.nonprivate_points[:cutoff],
             self.coreset_param,
             self.sim_hash,
             private_count=cutoff + 1,
-            frac_zero=self.frac_zero),
+            frac_zero=self.frac_zero,
+        ),
         TestLshTreeNode(
-            self.hash_prefix + '1',
+            f'{self.hash_prefix}1',
             self.nonprivate_points[cutoff:],
             self.coreset_param,
             self.sim_hash,
             private_count=len(self.nonprivate_points) - cutoff + 1,
-            frac_zero=self.frac_zero)
+            frac_zero=self.frac_zero,
+        ),
     ]
 
   def __eq__(self, other):

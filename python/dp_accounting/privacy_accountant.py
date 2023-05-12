@@ -119,8 +119,7 @@ class PrivacyAccountant(metaclass=abc.ABCMeta):
     """
     if not isinstance(event, dp_event.DpEvent):
       raise TypeError(f'`event` must be `DpEvent`. Found {type(event)}.')
-    composition_error = self._maybe_compose(event, count, False)
-    if composition_error:
+    if composition_error := self._maybe_compose(event, count, False):
       raise UnsupportedEventError(
           f'Unsupported event: {event}. Error: '
           f'[{composition_error.error_message}] caused by subevent '
